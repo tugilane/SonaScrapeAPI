@@ -17,14 +17,21 @@ blob_service_client = BlobServiceClient.from_connection_string(blob_connection_s
 
 def blob_tulemuste_nimekiri():
     container_client = blob_service_client.get_container_client(container= "tulemused")
-    blob_client = container_client.get_blob_client("tulemused.json")
-    blob_data = blob_client.download_blob().readall()
-    return json.loads(blob_data)
+    blobs = container_client.list_blobs()
+    blobidData = []
 
-def blob_ules_laadimine(data):
-    container_client = blob_service_client.get_container_client(container="tulemused")
-    blob_client = container_client.get_blob_client("tulemused.json")
-    blob_client.upload_blob(data,)
+    for blob in blobs:
+        blob_client = container_client.get_blob_client(blob.name)
+        download_stream = blob_client.download_blob()
+        blob_content = download_stream.readall()
+        json_data = json.loads(blob_content)
+        blobidData.append(json_data)
+
+    return blobidData
+
+def blob_ules_laadimine(data, aegNimeks):
+    blob_client = blob_service_client.get_blob_client(container="tulemused", blob=aegNimeks)
+    blob_client.upload_blob(data)
 
 @app.route('/tulemused', methods=['GET'])
 def vaata_tulemusi():
@@ -60,21 +67,22 @@ def lisa_tulemus():
                     sonuKokku += sonadeArv
                     pealkirjaList.append(artikkelTekst)
 
-        aegEestis = datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Helsinki'))
+        aegEestis = str(datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Helsinki'))).split('.')[0]
 
-        print(aegEestis.isoformat())
+
+        print(aegEestis)
         print(sonuKokku)
         print(pealkirjaList)
 
         data = {
             "sona": sona,
             "sonuKokku": sonuKokku,
-            "aeg": aegEestis.isoformat(),
+            "aeg": aegEestis,
             "pealkirjaList": pealkirjaList
         }
 
         json_data = json.dumps(data)
-        blob_ules_laadimine(json_data)
+        blob_ules_laadimine(json_data, aegEestis)
         return ('rida lisatud', 200)
     except Exception as e:
         print("Error:", e)
