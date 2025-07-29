@@ -4,9 +4,34 @@ import zoneinfo
 import bs4
 import lxml
 import string
+import os
+import json
+from flask import Flask, jsonify
+from flask import request
+from azure.storage.blob import BlobServiceClient
+
+app = Flask(__name__)
+
+blob_connection_string = os.getenv('BLOB_CONNECTION_STRING')
+blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
+
+def blob_tulemuste_nimekiri():
+    container_client = blob_service_client.get_container_client(container= "tulemused")
+    blob_client = container_client.get_blob_client("tulemused.json")
+    blob_data = blob_client.download_blob().readall()
+    return json.loads(blob_data)
+
+@app.route('/tulemused', methods=['GET'])
+def tulemused():
+    try:
+        data = blob_tulemuste_nimekiri()
+        print(data)
+        return jsonify(data), 200
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
 
 def scrape_err(sona):
-
     leht = requests.get('https://err.ee')
     html = leht.text
     soup = bs4.BeautifulSoup(html, 'lxml')
@@ -30,9 +55,7 @@ def scrape_err(sona):
     print(sonuKokku)
     print(pealkirjaList)
 
-
-
-
-scrape_err('trump')
+if __name__ == "__main__":
+    app.run(debug=True)
 
 
