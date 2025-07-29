@@ -69,6 +69,8 @@ def lisa_tulemus():
 
         aegEestis = str(datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Helsinki'))).split('.')[0]
 
+        if sonuKokku == 0:
+            return ('sõna ei leidu üheski artiklis')
 
         print(aegEestis)
         print(sonuKokku)
@@ -91,4 +93,7 @@ def lisa_tulemus():
 if __name__ == "__main__":
     app.run(debug=True)
 
+    #response = requests.get("https://err.ee")
+    #with open("downloaded_page.html", "w", encoding="utf-8") as file:
+    #    file.write(response.text)
 
