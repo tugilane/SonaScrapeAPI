@@ -15,12 +15,13 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/tulemused/*": {"origins": "*"}}) # Origins määrata frontend lehe aadress?
 
 # Andmebaasi ühendusvõti
-blob_connection_string = os.getenv('BLOB_CONNECTION_STRING')
+blob_connection_string = os.getenv('APPSETTING_AzureWebJobsStorage')
 blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
+blob_container_name = os.getenv('APPSETTING_blob_container_name') # määran konteineri Azure env muutujana, igaks juhuks, äkki vaja konteinerit vahetada pärast
 
 # Tõmbame JSON data tehtud otsingute kohta, kõik failid korraga.
 def blob_tulemuste_nimekiri():
-    container_client = blob_service_client.get_container_client(container= "tulemused")
+    container_client = blob_service_client.get_container_client(container= blob_container_name)
     blobs = container_client.list_blobs()
     blobidData = []
 
@@ -35,11 +36,11 @@ def blob_tulemuste_nimekiri():
 
 # uue otsingu data üles laadimine, uue JSON failina.
 def blob_ules_laadimine(data, aegNimeks):
-    blob_client = blob_service_client.get_blob_client(container="tulemused", blob=aegNimeks)
+    blob_client = blob_service_client.get_blob_client(container=blob_container_name, blob=aegNimeks)
     blob_client.upload_blob(data)
 
 # Vaatame tehtud sõnaotsinguid
-@app.route('/tulemused', methods=['GET'])
+@app.route('/tulemused/', methods=['GET'])
 def vaata_tulemusi():
     try:
         data = blob_tulemuste_nimekiri()
@@ -50,7 +51,7 @@ def vaata_tulemusi():
         return jsonify({"message": str(e)}), 500
 
 #Teeme päringu ERR pealehele ja teostama sõnaotsingu
-@app.route('/tulemused', methods=['POST'])
+@app.route('/tulemused/', methods=['POST'])
 def lisa_tulemus():
 
     input = json.loads(request.data)
