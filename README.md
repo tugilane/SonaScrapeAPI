@@ -11,7 +11,7 @@ Funktsionaalsus: <br/>
 /tulemused - GET <br/>
 tagastab kõik JSON failid, kus iga fail: päringu kuupäev, leitud sõnade arv, nimekiri sõna sisaldavatest artiklitest ja sõna ise. <br/>
 
-/tulemused - POST - {'otsitav': 'SIIA_SISESTA_OTSITAV_SÕNA'} <br/>
+/tulemused - POST - {"otsitav": "SIIA_SISESTA_OTSITAV_SÕNA"} <br/>
 teostab sõnaotsingu ja salvestab tulemuse andmebaasi.
 
 
