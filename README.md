@@ -15,9 +15,9 @@ tagastab kõik JSON failid, kus iga fail: päringu kuupäev, leitud sõnade arv,
 teostab sõnaotsingu ja salvestab tulemuse andmebaasi.
 
 TODO:
-andmebaasis 15 otsingu päringut ühes failis, endpointideks tulemused/1; tulemused/2; jne. Andmebaasis fail mis hoiab meeles käesolevat päringu numbrit.<br/>
-Piirata korraga tehtavate päringute arvu. <br/>
-ERR artiklitel on mingid lisapealkirjad mis vahel tulevad kaasa. <br/>
+1. andmebaasis 15 otsingu päringut ühes failis, endpointideks tulemused/1; tulemused/2; jne. Andmebaasis fail mis hoiab meeles käesolevat päringu numbrit.<br/>
+2. Piirata korraga tehtavate päringute arvu. <br/>
+3. ERR artiklitel on mingid lisapealkirjad mis vahel tulevad kaasa. <br/>
 
 
 
