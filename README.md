@@ -14,5 +14,13 @@ tagastab kõik JSON failid, kus iga fail: päringu kuupäev, leitud sõnade arv,
 /tulemused - POST - {"otsitav": "SIIA_SISESTA_OTSITAV_SÕNA"} <br/>
 teostab sõnaotsingu ja salvestab tulemuse andmebaasi.
 
+TODO:
+andmebaasis 15 otsingu päringut ühes failis, endpointideks tulemused/1; tulemused/2; jne. Andmebaasis fail mis hoiab meeles käesolevat päringu numbrit.<br/>
+Piirata korraga tehtavate päringute arvu. <br/>
+ERR artiklitel on mingid lisapealkirjad mis vahel tulevad kaasa. <br/>
+
+
+
+
 
 
