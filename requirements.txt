@@ -4,3 +4,4 @@ azure-storage-blob
 flask-cors
 bs4
 lxml
+tzdata

@@ -65,9 +65,10 @@ def lisa_tulemus():
         sonuKokku = 0
         for artikkel in soup.find_all(class_="article"): # Valime kõik objektid ERR pealehel millel "article" klass määratud
             pealkiri = artikkel.find("h2") # valitud objektides on h2 elemendina artiklite pealkirjad
+            peamine = pealkiri.find("span")
 
-            if pealkiri is not None: # väike debug, sest sain artikli kus polnud pealkirja.
-                artikkelTekst = pealkiri.get_text().lower()
+            if peamine is not None: # väike debug, sest sain artikli kus polnud pealkirja.
+                artikkelTekst = peamine.get_text().lower()
                 märgitaTekst = artikkelTekst.translate(str.maketrans('', '', string.punctuation)) #kaotan kirjavahemärgid
                 sonadeArv = märgitaTekst.split().count(sona.lower())
                 if sonadeArv > 0:
