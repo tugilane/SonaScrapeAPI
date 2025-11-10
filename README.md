@@ -20,6 +20,7 @@ TODO:
 1. andmebaasis 15 otsingu päringut ühes failis, endpointideks tulemused/1; tulemused/2; jne. Andmebaasis fail mis hoiab meeles käesolevat päringu numbrit.<br/>
 2. Piirata korraga tehtavate päringute arvu. <br/>
 3. legaalseks teha- peab salvestama koos pealkirjaga ka lingi artiklile. <br/>
+4. Post päring võiks olla /tulemused endpointil
 
 
 
