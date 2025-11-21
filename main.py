@@ -71,18 +71,21 @@ def lisa_tulemus():
         soup = bs4.BeautifulSoup(html, 'lxml')
 
         pealkirjaList = []
+        artikliteLingid = []
         sonuKokku = 0
         for artikkel in soup.find_all(class_="article"): # Valime kõik objektid ERR pealehel millel "article" klass määratud
             pealkiri = artikkel.find("h2") # valitud objektides on h2 elemendina artiklite pealkirjad
             peamine = pealkiri.find("span")
+            aadressLink = artikkel.find("a").attrs["href"] # salvestan artikli lingi
 
             if peamine is not None: # väike debug, sest sain artikli kus polnud pealkirja.
-                artikkelTekst = peamine.get_text().lower()
+                artikkelTekst = peamine.get_text().lower() # artikkel väikesteks tähtedeks
                 märgitaTekst = artikkelTekst.translate(str.maketrans('', '', string.punctuation)) #kaotan kirjavahemärgid
-                sonadeArv = märgitaTekst.split().count(sona.lower())
+                sonadeArv = märgitaTekst.split().count(sona.lower()) # loen sõnad kokku
                 if sonadeArv > 0:
                     sonuKokku += sonadeArv
                     pealkirjaList.append(artikkelTekst)
+                    artikliteLingid.append(aadressLink)
 
         aegEestis = str(datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Helsinki'))).split('.')[0]
 
@@ -98,7 +101,8 @@ def lisa_tulemus():
             "sona": sona,
             "sonuKokku": sonuKokku,
             "aeg": aegEestis,
-            "pealkirjaList": pealkirjaList
+            "pealkirjaList": pealkirjaList,
+            "artikliteLingid": artikliteLingid,
         }
 
         json_data = json.dumps(data)
