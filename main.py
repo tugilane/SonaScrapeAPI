@@ -25,33 +25,42 @@ limiter = Limiter(
 # Andmebaasi ühendusvõti
 blob_connection_string = os.getenv('BLOB_CONNECTION_STRING') # azure muutuja- APPSETTING_AzureWebJobsStorage, lokaalne testimise muutuja- BLOB_CONNECTION_STRING
 blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
-blob_container_name = os.getenv('BLOB_CONTAINER_NAME') # azure muutuja- APPSETTING_blob_container_name, vaikimisi konteiner- tulemused, lokaalne testimise muutuja- BLOB_CONTAINER_NAME
+#blob_container_name = os.getenv('BLOB_CONTAINER_NAME') # azure muutuja- APPSETTING_blob_container_name, vaikimisi konteiner- tulemused, lokaalne testimise muutuja- BLOB_CONTAINER_NAME
 
-# Tõmbame JSON data tehtud otsingute kohta, kõik failid korraga.
-def blob_tulemuste_nimekiri():
-    container_client = blob_service_client.get_container_client(container= blob_container_name)
-    blobs = container_client.list_blobs()
-    blobidData = []
-
-    for blob in blobs: # iga JSON faili puhul, tõmbame data alla
-        blob_client = container_client.get_blob_client(blob.name)
-        download_stream = blob_client.download_blob()
-        blob_content = download_stream.readall()
-        json_data = json.loads(blob_content)
-        blobidData.append(json_data)
-
-    return blobidData
+# Otsime Azure konteinerist blobi mida vajame ja tõmbame jsoni alla
+def blob_lae_alla_json(failiNimi):
+    blob_client = blob_service_client.get_blob_client(container= "tulemused", blob= failiNimi)
+    download_stream = blob_client.download_blob()
+    blob_content = download_stream.readall()
+    json_data = json.loads(blob_content)
+    return json_data
 
 # uue otsingu data üles laadimine, uue JSON failina.
-def blob_ules_laadimine(data, aegNimeks):
-    blob_client = blob_service_client.get_blob_client(container=blob_container_name, blob=aegNimeks)
-    blob_client.upload_blob(data)
+def blob_ules_laadimine(data, failiJarjekord, uusFail):
+    fail = failiJarjekord + ".json" # selgitame mis faili saadame uue päringu
+    blob_client = blob_service_client.get_blob_client(container="tulemused", blob=fail)
+
+    if uusFail: # kui päring läheb uude faili, loome ka selle faili
+        blob_client.upload_blob(data, overwrite=True)
+    else: # kui ei lähe uude faili, lisame käesolevasse
+        blob_client.upload_blob(data)
+
+#selgitame kus maal on järjekord
+def blob_lae_alla_jarjekord():
+    blob_client = blob_service_client.get_blob_client(container="jarg", blob="jarjekord.txt") #järjefail
+    return blob_client.download_blob().readall()
+
+#laeme uue järjekorra üles
+def blob_lae_ules_jarjekord(jarjekorraFail):
+    blob_client = blob_service_client.get_blob_client(container="jarg", blob= "jarjekord.txt")
+    blob_client.upload_blob(jarjekorraFail, overwrite=True)
 
 # Vaatame tehtud sõnaotsinguid
-@app.route('/tulemused', methods=['GET'])
-def vaata_tulemusi():
+@app.route('/tulemused/<id>', methods=['GET'])
+def vaata_tulemusi(id):
     try:
-        data = blob_tulemuste_nimekiri()
+        otsitavJson = id + ".json"
+        data = blob_lae_alla_json(otsitavJson)
         print(data)
         return jsonify(data), 200
     except Exception as e:
@@ -106,11 +115,28 @@ def lisa_tulemus():
         }
 
         json_data = json.dumps(data)
-        blob_ules_laadimine(json_data, aegEestis) # laeme üles
+
+        try:
+            #vaatame järjekorda ja uuendame järge
+            jarjekord = blob_lae_alla_jarjekord().split(",") # failis esimene arv on käesolev fail ja teine arv on päringute arv failis
+            uusFail = False  # kas vaja uus fail luua
+            if jarjekord[1] == 15: # kui on 15 päringut failis
+                jarjekord[0] = jarjekord[0] + 1 # muudame uueks faililaiendiks ühe võrra suurema arvu
+                jarjekord[1] = 0 # nullime päringute arvu failis
+                uusFail = True
+            else:
+                jarjekord[1] = jarjekord[1] + 1 # kui pole veel 15 päringut, lisama päringute arvule +1
+            uuendatudJärjekord = jarjekord[0] + jarjekord[1]
+
+            blob_lae_ules_jarjekord(uuendatudJärjekord) #laeme üles uue järjekorra
+        except Exception as e:
+            return jsonify({"message": "viga järjekorra failiga suhtluses " + str(e)}), 500
+
+        blob_ules_laadimine(json_data, jarjekord[0], uusFail) # laeme üles uue päringu
         return ({'message': 'rida lisatud'}, 201)
     except Exception as e:
         print("Error:", e)
-        return jsonify({"message": str(e)}), 500
+        return jsonify({"message": "viga sõnaotsingus " + str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
