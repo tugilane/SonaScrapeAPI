@@ -10,14 +10,22 @@ from flask import Flask, jsonify
 from flask import request
 from azure.storage.blob import BlobServiceClient
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/tulemused/*": {"origins": "*"}}) # Origins määrata frontend lehe aadress?
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["100 per day", "50 per hour", "1 per second"],
+    storage_uri="memory://",
+)
 
 # Andmebaasi ühendusvõti
-blob_connection_string = os.getenv('APPSETTING_AzureWebJobsStorage')
+blob_connection_string = os.getenv('BLOB_CONNECTION_STRING') # azure muutuja- APPSETTING_AzureWebJobsStorage, lokaalne testimise muutuja- BLOB_CONNECTION_STRING
 blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
-blob_container_name = os.getenv('APPSETTING_blob_container_name') # määran konteineri Azure env muutujana, igaks juhuks, äkki vaja konteinerit vahetada pärast
+blob_container_name = os.getenv('BLOB_CONTAINER_NAME') # azure muutuja- APPSETTING_blob_container_name, vaikimisi konteiner- tulemused, lokaalne testimise muutuja- BLOB_CONTAINER_NAME
 
 # Tõmbame JSON data tehtud otsingute kohta, kõik failid korraga.
 def blob_tulemuste_nimekiri():
@@ -40,7 +48,7 @@ def blob_ules_laadimine(data, aegNimeks):
     blob_client.upload_blob(data)
 
 # Vaatame tehtud sõnaotsinguid
-@app.route('/tulemused/', methods=['GET'])
+@app.route('/tulemused', methods=['GET'])
 def vaata_tulemusi():
     try:
         data = blob_tulemuste_nimekiri()
@@ -51,7 +59,8 @@ def vaata_tulemusi():
         return jsonify({"message": str(e)}), 500
 
 #Teeme päringu ERR pealehele ja teostama sõnaotsingu
-@app.route('/tulemused/', methods=['POST'])
+@app.route('/tulemused', methods=['POST'])
+@limiter.limit("5 per minute")
 def lisa_tulemus():
 
     input = json.loads(request.data)

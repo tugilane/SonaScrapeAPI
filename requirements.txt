@@ -5,3 +5,5 @@ flask-cors
 bs4
 lxml
 tzdata
+flask_limiter
+
