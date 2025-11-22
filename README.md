@@ -22,7 +22,8 @@ TODO:
 3. legaalsus, ERR tingimused- peab salvestama koos pealkirjaga ka lingi artiklile. (v4) <br/>
 4. Post päring võiks olla /tulemused endpointil (v3) <br/>
 5. kas lisada ka tulemus andmebaasi kui ei leitud vastet??? <br/>
-6. kas võimaldada sõnapaari otsing? nt. "Siim Kallas", mitte lihtsalt "Siim" või "Kallas"???
+6. kas võimaldada sõnapaari otsing? nt. "Siim Kallas", mitte lihtsalt "Siim" või "Kallas"??? <br/>
+7. Endpoint järje kuvamiseks, et kus failis hetkel hiljutiseim päring on ja/või kuvame järge igal GET päringul (v6)
 
 
 
