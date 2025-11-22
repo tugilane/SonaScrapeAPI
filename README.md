@@ -17,10 +17,12 @@ tagastab kõik JSON failid, kus iga fail: päringu kuupäev, leitud sõnade arv,
 teostab sõnaotsingu ja salvestab tulemuse andmebaasi.
 
 TODO:
-1. andmebaasis 15 otsingu päringut ühes failis, endpointideks tulemused/1; tulemused/2; jne. Andmebaasis fail mis hoiab meeles käesolevat päringu numbrit.<br/>
-2. Piirata korraga tehtavate päringute arvu. <br/>
-3. legaalseks teha- peab salvestama koos pealkirjaga ka lingi artiklile. <br/>
-4. Post päring võiks olla /tulemused endpointil
+1. andmebaasis 15 otsingu päringut ühes failis, endpointideks tulemused/1; tulemused/2; jne. Andmebaasis fail mis hoiab meeles käesolevat päringu numbrit. (v5) <br/>
+2. Piirata korraga tehtavate päringute arvu. (v3) <br/>
+3. legaalsus, ERR tingimused- peab salvestama koos pealkirjaga ka lingi artiklile. (v4) <br/>
+4. Post päring võiks olla /tulemused endpointil (v3) <br/>
+5. kas lisada ka tulemus andmebaasi kui ei leitud vastet??? <br/>
+6. kas võimaldada sõnapaari otsing? nt. "Siim Kallas", mitte lihtsalt "Siim" või "Kallas"???
 
 
 
