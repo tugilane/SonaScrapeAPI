@@ -14,7 +14,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/tulemused*": {"origins": "*"}}) # Origins määrata frontend lehe aadress?
+cors = CORS(app, resources={r"/tulemused*": {"origins": "*"}})
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -25,7 +25,6 @@ limiter = Limiter(
 # Andmebaasi ühendusvõti
 blob_connection_string = os.getenv('BLOB_CONNECTION_STRING') # azure muutuja- APPSETTING_AzureWebJobsStorage, lokaalne testimise muutuja- BLOB_CONNECTION_STRING
 blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
-#blob_container_name = os.getenv('BLOB_CONTAINER_NAME') # azure muutuja- APPSETTING_blob_container_name, vaikimisi konteiner- tulemused, lokaalne testimise muutuja- BLOB_CONTAINER_NAME
 
 # Otsime Azure konteinerist blobi mida vajame ja tõmbame jsoni alla
 def blob_lae_alla_json(failiNimi):
@@ -46,7 +45,7 @@ def blob_ules_laadimine(uus_data, failiJarjekord, uusFail):
         dataList.append(uus_data)
         json_data = json.dumps(dataList)
         blob_client.upload_blob(json_data)
-    else: # kui ei läheb uude faili, lisame käesolevasse
+    else: # kui ei lähe uude faili, lisame käesolevasse
         json_raw = blob_lae_alla_json(failiJarjekord + ".json")
         json_raw.append(uus_data)
         json_data = json.dumps(json_raw)
@@ -77,6 +76,13 @@ def vaata_tulemusi(id):
         print("Error:", e)
         return jsonify({"message": str(e)}), 500
 
+@app.route('/jarg', methods=['GET'])
+def kusJarg():
+    jarjekord = blob_lae_alla_jarjekord().split(",")
+    sonum = f'{jarjekord[0]},{jarjekord[1]}, -kus {jarjekord[0]} on faili number ja {jarjekord[1]} on rea number' # formaadis [nr1,nr2,põhjendus]
+    return jsonify(sonum), 200
+
+
 #Teeme päringu ERR pealehele ja teostama sõnaotsingu
 @app.route('/tulemused', methods=['POST'])
 @limiter.limit("5 per minute")
@@ -86,74 +92,75 @@ def lisa_tulemus():
     sona = input['otsitav']
     try:
         leht = requests.get('https://err.ee')
-        html = leht.text
-        soup = bs4.BeautifulSoup(html, 'lxml')
+    except Exception as e:
+        return jsonify({"message": "ei pääse ligi ERR kodulehele" + str(e)}), 500
+    leht = requests.get('https://err.ee')
+    html = leht.text
+    soup = bs4.BeautifulSoup(html, 'lxml')
 
-        pealkirjaList = []
-        artikliteLingid = []
-        sonuKokku = 0
-        for artikkel in soup.find_all(class_="article"): # Valime kõik objektid ERR pealehel millel "article" klass määratud
-            pealkiri = artikkel.find("h2") # valitud objektides on h2 elemendina artiklite pealkirjad
-            peamine = pealkiri.find("span")
-            aadressLink = artikkel.find("a").attrs["href"] # salvestan artikli lingi
+    pealkirjaList = []
+    artikliteLingid = []
+    sonuKokku = 0
+    for artikkel in soup.find_all(class_="article"): # Valime kõik objektid ERR pealehel millel "article" klass määratud
+        pealkiri = artikkel.find("h2") # valitud objektides on h2 elemendina artiklite pealkirjad
+        peamine = pealkiri.find("span")
+        aadressLink = artikkel.find("a").attrs["href"] # salvestan artikli lingi
 
-            if peamine is not None: # väike debug, sest sain artikli kus polnud pealkirja.
-                artikkelTekst = peamine.get_text().lower() # artikkel väikesteks tähtedeks
-                märgitaTekst = artikkelTekst.translate(str.maketrans('', '', string.punctuation)) #kaotan kirjavahemärgid
-                sonadeArv = märgitaTekst.split().count(sona.lower()) # loen sõnad kokku
-                if sonadeArv > 0:
-                    sonuKokku += sonadeArv
-                    pealkirjaList.append(artikkelTekst)
-                    artikliteLingid.append(aadressLink)
+        if peamine is not None: # väike debug, sest sain artikli kus polnud pealkirja.
+            artikkelTekst = peamine.get_text().lower() # artikkel väikesteks tähtedeks
+            märgitaTekst = artikkelTekst.translate(str.maketrans('', '', string.punctuation)) #kaotan kirjavahemärgid
+            sonadeArv = märgitaTekst.split().count(sona.lower()) # loen sõnad kokku
+            if sonadeArv > 0:
+                sonuKokku += sonadeArv
+                pealkirjaList.append(artikkelTekst)
+                artikliteLingid.append(aadressLink)
 
-        aegEestis = str(datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Helsinki'))).split('.')[0]
+    aegEestis = str(datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Helsinki'))).split('.')[0]
 
-        if sonuKokku == 0:
-            return jsonify({'message': 'sõna ei leidu üheski artiklis'}, 204)
+    #if sonuKokku == 0:
+    #    return jsonify({'message': 'sõna ei leidu üheski artiklis'}, 204)
 
-        print(aegEestis)
-        print(sonuKokku)
-        print(pealkirjaList)
+    print(aegEestis)
+    print(sonuKokku)
+    print(pealkirjaList)
 
-        #koostatav fail
-        data = {
-            "sona": sona,
-            "sonuKokku": sonuKokku,
-            "aeg": aegEestis,
-            "pealkirjaList": pealkirjaList,
-            "artikliteLingid": artikliteLingid,
-        }
+    #koostatav fail
+    data = {
+        "sona": sona,
+        "sonuKokku": sonuKokku,
+        "aeg": aegEestis,
+        "pealkirjaList": pealkirjaList,
+        "artikliteLingid": artikliteLingid,
+    }
 
-        try:
-            #vaatame järjekorda ja uuendame järge
-            try:
-                jarjekord = blob_lae_alla_jarjekord().split(",") # failis esimene arv on käesolev fail ja teine arv on päringute arv failis
-            except Exception as e:
-                return jsonify({"message": "viga jarjekorra allalaadimisel" + str(e)}), 500
-            uusFail = False  # kas vaja uus fail luua
-            leht = int(jarjekord[0])
-            päringuid = int(jarjekord[1])
-            if päringuid >= 15: # kui on 15 päringut failis
-                leht = leht + 1 # muudame uueks faililaiendiks ühe võrra suurema arvu
-                päringuid = 0 # nullime päringute arvu failis
-                uusFail = True
-            else:
-                päringuid = päringuid + 1 # kui pole veel 15 päringut, lisama päringute arvule +1
+    #vaatame järjekorda ja uuendame järge
+    try:
+        jarjekord = blob_lae_alla_jarjekord().split(",") # failis esimene arv on käesolev fail ja teine arv on päringute arv failis
+    except Exception as e:
+        return jsonify({"message": "viga jarjekorra allalaadimisel" + str(e)}), 500
+    uusFail = False  # kas vaja uus fail luua
+    leht = int(jarjekord[0])
+    päringuid = int(jarjekord[1])
 
-            uuendatudJärjekord = str(leht) + "," + str(päringuid)
-            try:
-                blob_lae_ules_jarjekord(uuendatudJärjekord) #laeme üles uue järjekorra
-            except Exception as e:
-                return jsonify({"message": "viga jarjekorra üles laadimisel" + str(e)}), 500
+    if päringuid >= 15: # kui on 15 päringut failis
+        leht = leht + 1 # muudame uueks faililaiendiks ühe võrra suurema arvu
+        päringuid = 1 # nullime päringute arvu failis
+        uusFail = True
+    else:
+        päringuid = päringuid + 1 # kui pole veel 15 päringut, lisama päringute arvule +1
+    uuendatudJärjekord = str(leht) + "," + str(päringuid)
 
-        except Exception as e:
-            return jsonify({"message": "viga järjekorra faili loogikas " + str(e)}), 500
+    try:
+        blob_lae_ules_jarjekord(uuendatudJärjekord) #laeme üles uue järjekorra
+    except Exception as e:
+        return jsonify({"message": "viga jarjekorra üles laadimisel" + str(e)}), 500
 
+    try:
         blob_ules_laadimine(data, str(leht), uusFail) # laeme üles uue päringu
-        return ({'message': 'rida lisatud'}, 201)
+        return ({'message': f'rida lisatud, sõnu oli kokku {sonuKokku}'}, 201)
     except Exception as e:
         print("Error:", e)
-        return jsonify({"message": "viga sõnaotsingus " + str(e)}), 500
+        return jsonify({"message": "viga uue blobi üles laadimisel " + str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
