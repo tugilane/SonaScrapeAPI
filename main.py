@@ -12,9 +12,14 @@ from azure.storage.blob import BlobServiceClient
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/tulemused*": {"origins": "*"}})
+
+#sunnime kasutama HTTPS, kuna Azure proxy tahab APIle suunata HTTP protoga.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+app.config['PREFERRED_URL_SCHEME'] = 'https'
+
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -23,7 +28,7 @@ limiter = Limiter(
 )
 
 # Andmebaasi ühendusvõti
-blob_connection_string = os.getenv('BLOB_CONNECTION_STRING') # azure muutuja- APPSETTING_AzureWebJobsStorage, lokaalne testimise muutuja- BLOB_CONNECTION_STRING
+blob_connection_string = os.getenv('APPSETTING_AzureWebJobsStorage') # env variable azures
 blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
 
 # Otsime Azure konteinerist blobi mida vajame ja tõmbame jsoni alla
@@ -84,10 +89,11 @@ def kusJarg():
 
 
 #Teeme päringu ERR pealehele ja teostama sõnaotsingu
-@app.route('/tulemused', methods=['POST'])
+@app.route('/tulemused', methods=['POST'], strict_slashes=False)
 @limiter.limit("5 per minute")
 def lisa_tulemus():
 
+    print("alsutan postiga")
     input = json.loads(request.data)
     sona = input['otsitav']
     try:
@@ -164,7 +170,6 @@ def lisa_tulemus():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
     #loogika kontrolli jaoks lehe allalaadimine
     #response = requests.get("https://err.ee")
     #with open("downloaded_page.html", "w", encoding="utf-8") as file:
