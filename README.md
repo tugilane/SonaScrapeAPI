@@ -5,7 +5,7 @@ API hetkel üleval aadressil: https://sonascrapev6-2-eshyemckeah6b3g4.northeurop
 Eesmärk on teostada sõna otsingut ERR uudisteportaalis ja salvestada tulemus andmebaasi. Näiteks soovin otsida sõna "Trump", API loeb kokku mitu korda sõna "Trump" (suur-väike täht ei mängi rolli) esineb ERR pealehe artiklite pealkirjades.
 Sõnaotsing arvestab vaid https//err.ee veebilehe esilehe peamiste artiklitega.<br/>
 
-Päringud salvestatakse andmebaasis JSON failidesse, kus igas JSON failis on max 15 päringut. <br/>
+Päringud salvestatakse andmebaasis JSON failidesse, kus igas JSON failis on max 15 päringu logi. Igas päringu logis on info: aeg mil otsing teostati, lingid leitud artiklitele, leitud artiklite pealkirjad, otsitav sõna ise, mitu korda sõna esines artiklite peale kokku. <br/>
 
 POST - /tulemused <br/>
 request body - {"otsitav": "SIIA_SISESTA_OTSITAV_SÕNA"} <br/>
@@ -17,10 +17,10 @@ https://sonascrapev6-2-eshyemckeah6b3g4.northeurope-01.azurewebsites.net/jarg <b
 Tagastab sõnumina kõige viimatise faili nr ja mitu päringut on selles failis. Antud päring on järje leidmiseks. <br/>
 
 GET - /tulemused/SIIA_SISESTA_SOOVITUD_FAILINR <br/>
-https://sonascrapev6-2-eshyemckeah6b3g4.northeurope-01.azurewebsites.net/tulemused/1 <br/>
+https://sonascrapev6-2-eshyemckeah6b3g4.northeurope-01.azurewebsites.net/tulemused/3 <br/>
 Tagastab soovitud JSON faili sisu.<br/>
 
-Tegu on Python flask API-ga, mis kasutab Beautiful Soup teeki ERR portaali HTML alla laadimiseks. API jookseb Docker image pealt Azure Web App teenusena. Andmebaas on dokumendipõhine, Post päring API'l salvestab sõnaotsingu tulemuse privaatsesse Azure blob storage'isse JSON faili. JSON faili sisuks on: päringu teostamise aeg, leitud sõnade arv, nimekiri sõna sisaldavatest artiklitest, sõna ise ja artiklite lingid. GET päringutel piirang- 100 per day, 50 per hour, 1 per second. POST päringul lisandub piirang- 5 per minute. <br/>
+Tegu on Python flask API-ga, mis kasutab Beautiful Soup teeki ERR portaali HTML alla laadimiseks. API jookseb Docker image pealt Azure Web App teenusena. Andmebaas on dokumendipõhine, Post päring API'l salvestab sõnaotsingu tulemuse privaatsesse Azure blob storage'isse JSON faili. GET päringutel piirang- 100 per day, 50 per hour, 1 per second. POST päringul lisandub piirang- 5 per minute. <br/>
 
 Hetkel pilves versioon: v6 <br/>
 TODO:
